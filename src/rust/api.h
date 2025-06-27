@@ -1,8 +1,2 @@
-SEXP savvy_int_times_int__ffi(SEXP c_arg__x, SEXP c_arg__y);
-SEXP savvy_to_upper__ffi(SEXP c_arg__x);
+SEXP savvy_apng__ffi(SEXP c_arg__png_files, SEXP c_arg__apng_file, SEXP c_arg__delay);
 
-// methods and associated functions for Person
-SEXP savvy_Person_associated_function__ffi(void);
-SEXP savvy_Person_name__ffi(SEXP self__);
-SEXP savvy_Person_new__ffi(void);
-SEXP savvy_Person_set_name__ffi(SEXP self__, SEXP c_arg__name);

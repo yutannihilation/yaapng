@@ -1,117 +1,97 @@
 // Example functions
 
+use std::fs::File;
+use std::io::{self, BufWriter, Write};
+
 use savvy::savvy;
 
-use savvy::{IntegerSexp, OwnedIntegerSexp, OwnedStringSexp, StringSexp};
+use savvy::StringSexp;
 
-use savvy::NotAvailableValue;
-
-/// Convert Input To Upper-Case
-///
-/// @param x A character vector.
-/// @returns A character vector with upper case version of the input.
-/// @export
 #[savvy]
-fn to_upper(x: StringSexp) -> savvy::Result<savvy::Sexp> {
-    let mut out = OwnedStringSexp::new(x.len())?;
+fn apng(png_files: StringSexp, apng_file: &str, delay: f64) -> savvy::Result<()> {
+    // Create output file
+    let output_file = File::create(apng_file)?;
+    let mut writer = BufWriter::new(output_file);
 
-    for (i, e) in x.iter().enumerate() {
-        if e.is_na() {
-            out.set_na(i)?;
-            continue;
+    // Convert delay from seconds to milliseconds
+    let delay_ms = (delay * 1000.0) as u16;
+
+    // Collect all frames
+    let mut frames = Vec::new();
+    let mut actual_width = 0u32;
+    let mut actual_height = 0u32;
+
+    for (i, p) in png_files.iter().enumerate() {
+        let reader = io::BufReader::new(File::open(p)?);
+        let mut decoder = png::Decoder::new(reader);
+
+        decoder.set_transformations(png::Transformations::EXPAND);
+
+        let header_info = decoder.read_header_info()?;
+
+        if header_info.is_animated() {
+            return Err(savvy::savvy_err!(
+                "Input file must be non-animated PNG: {p}"
+            ));
         }
 
-        let e_upper = e.to_uppercase();
-        out.set_elt(i, &e_upper)?;
-    }
+        let (frame_width, frame_height) = header_info.size();
 
-    Ok(out.into())
-}
-
-/// Multiply Input By Another Input
-///
-/// @param x An integer vector.
-/// @param y An integer to multiply.
-/// @returns An integer vector with values multiplied by `y`.
-/// @export
-#[savvy]
-fn int_times_int(x: IntegerSexp, y: i32) -> savvy::Result<savvy::Sexp> {
-    let mut out = OwnedIntegerSexp::new(x.len())?;
-
-    for (i, e) in x.iter().enumerate() {
-        if e.is_na() {
-            out.set_na(i)?;
+        // For the first frame, set the dimensions
+        if i == 0 {
+            actual_width = frame_width;
+            actual_height = frame_height;
         } else {
-            out[i] = e * y;
+            // Check if subsequent frames have the same dimensions
+            if frame_width != actual_width || frame_height != actual_height {
+                return Err(savvy::savvy_err!(
+                    "Frame dimensions ({frame_width}x{frame_height}) do not match first frame dimensions ({actual_width}x{actual_height})"
+                ));
+            }
         }
+
+        let mut png_reader = decoder.read_info()?;
+
+        // Get the actual output buffer info after transformations
+        let output_info = png_reader.output_buffer_size();
+        let mut image_buf = vec![0; output_info];
+
+        png_reader.next_frame(&mut image_buf)?;
+
+        // Store the transformed color type (after EXPAND transformation)
+        let (output_color_type, output_bit_depth) = png_reader.output_color_type();
+
+        frames.push((image_buf, output_color_type, output_bit_depth));
     }
 
-    Ok(out.into())
-}
+    if frames.is_empty() {
+        return Err(savvy::savvy_err!("No frames to process"));
+    }
 
-#[savvy]
-struct Person {
-    pub name: String,
-}
+    // Create PNG encoder for APNG using actual frame dimensions
+    let mut encoder = png::Encoder::new(&mut writer, actual_width, actual_height);
 
-/// A person with a name
-///
-/// @export
-#[savvy]
-impl Person {
-    fn new() -> Self {
-        Self {
-            name: "".to_string(),
+    // Use the color type and bit depth from the first frame
+    let (_, first_color_type, first_bit_depth) = &frames[0];
+    encoder.set_color(*first_color_type);
+    encoder.set_depth(*first_bit_depth);
+
+    // Set up animation control
+    encoder.set_animated(frames.len() as u32, 0)?;
+    encoder.set_frame_delay(delay_ms, delay_ms)?;
+
+    let mut writer = encoder.write_header()?;
+
+    // Write all frames
+    for (i, (frame_data, _, _)) in frames.iter().enumerate() {
+        if i > 0 {
+            // For subsequent frames, we need to set frame control
+            writer.set_frame_delay(delay_ms, delay_ms)?;
         }
+        writer.write_image_data(frame_data)?;
     }
 
-    fn set_name(&mut self, name: &str) -> savvy::Result<()> {
-        self.name = name.to_string();
-        Ok(())
-    }
+    writer.finish()?;
 
-    fn name(&self) -> savvy::Result<savvy::Sexp> {
-        let mut out = OwnedStringSexp::new(1)?;
-        out.set_elt(0, &self.name)?;
-        Ok(out.into())
-    }
-
-    fn associated_function() -> savvy::Result<savvy::Sexp> {
-        let mut out = OwnedStringSexp::new(1)?;
-        out.set_elt(0, "associated_function")?;
-        Ok(out.into())
-    }
-}
-
-// This test is run by `cargo test`. You can put tests that don't need a real
-// R session here.
-#[cfg(test)]
-mod test1 {
-    #[test]
-    fn test_person() {
-        let mut p = super::Person::new();
-        p.set_name("foo").expect("set_name() must succeed");
-        assert_eq!(&p.name, "foo");
-    }
-}
-
-// Tests marked under `#[cfg(feature = "savvy-test")]` are run by `savvy-cli test`, which
-// executes the Rust code on a real R session so that you can use R things for
-// testing.
-#[cfg(feature = "savvy-test")]
-mod test1 {
-    // The return type must be `savvy::Result<()>`
-    #[test]
-    fn test_to_upper() -> savvy::Result<()> {
-        // You can create a non-owned version of input by `.as_read_only()`
-        let x = savvy::OwnedStringSexp::try_from_slice(["foo", "bar"])?.as_read_only();
-
-        let result = super::to_upper(x)?;
-
-        // This function compares an SEXP with the result of R code specified in
-        // the second argument.
-        savvy::assert_eq_r_code(result, r#"c("FOO", "BAR")"#);
-
-        Ok(())
-    }
+    Ok(())
 }
