@@ -7,6 +7,8 @@ edition = "2021"
 crate-type = ["staticlib", "lib"]
 
 [dependencies]
+oxipng = "9.1.5"
+png = "0.17.16"
 savvy = "*"
 
 [profile.release]
