@@ -34,14 +34,14 @@ SEXP handle_result(SEXP res_) {
     return (SEXP)res;
 }
 
-SEXP savvy_apng__impl(SEXP c_arg__png_files, SEXP c_arg__apng_file, SEXP c_arg__delay) {
-    SEXP res = savvy_apng__ffi(c_arg__png_files, c_arg__apng_file, c_arg__delay);
+SEXP savvy_apng__impl(SEXP c_arg__png_files, SEXP c_arg__apng_file, SEXP c_arg__delay_num, SEXP c_arg__delay_den) {
+    SEXP res = savvy_apng__ffi(c_arg__png_files, c_arg__apng_file, c_arg__delay_num, c_arg__delay_den);
     return handle_result(res);
 }
 
 
 static const R_CallMethodDef CallEntries[] = {
-    {"savvy_apng__impl", (DL_FUNC) &savvy_apng__impl, 3},
+    {"savvy_apng__impl", (DL_FUNC) &savvy_apng__impl, 4},
     {NULL, NULL, 0}
 };
 
