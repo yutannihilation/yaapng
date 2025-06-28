@@ -3,7 +3,7 @@
 use std::fs::File;
 use std::io::{self, Write};
 
-use savvy::{r_println, savvy};
+use savvy::savvy;
 
 use savvy::StringSexp;
 
@@ -29,10 +29,7 @@ fn apng(
 
     for (i, p) in png_files.iter().enumerate() {
         let reader = io::BufReader::new(File::open(p)?);
-        let mut decoder = png::Decoder::new(reader);
-
-        // Don't expand - preserve original format
-        // decoder.set_transformations(png::Transformations::EXPAND);
+        let decoder = png::Decoder::new(reader);
 
         let mut png_reader = decoder.read_info()?;
         let info = png_reader.info();
@@ -49,7 +46,7 @@ fn apng(
         if i == 0 {
             actual_width = frame_width;
             actual_height = frame_height;
-            
+
             // Store palette if it's an indexed image
             if info.color_type == png::ColorType::Indexed {
                 palette = info.palette.clone();
@@ -87,7 +84,7 @@ fn apng(
 
     encoder.set_color(*first_color_type);
     encoder.set_depth(*first_bit_depth);
-    
+
     // Set palette if we have one (for indexed images)
     if let Some(ref pal) = palette {
         encoder.set_palette(pal.clone());
@@ -96,6 +93,7 @@ fn apng(
     // Set up animation control
     encoder.set_animated(frames.len() as u32, 0)?;
     encoder.set_frame_delay(delay_num_ms, delay_den_ms)?;
+    encoder.set_compression(png::Compression::Best);
 
     let mut writer = encoder.write_header()?;
 
