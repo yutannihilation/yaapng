@@ -5,3 +5,8 @@
 ^src/rust/target$
 ^src/Makevars$
 ^src/Makevars\.win$
+^\.github$
+^README\.Rmd$
+
+^anim$
+^.quarto$

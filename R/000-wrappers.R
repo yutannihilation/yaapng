@@ -38,8 +38,8 @@ NULL
 }
 
 
-`apng` <- function(`png_files`, `apng_file`, `delay_num`, `delay_den`) {
-  invisible(.Call(savvy_apng__impl, `png_files`, `apng_file`, `delay_num`, `delay_den`))
+`apng_inner` <- function(`png_files`, `apng_file`, `delay_num`, `delay_den`) {
+  invisible(.Call(savvy_apng_inner__impl, `png_files`, `apng_file`, `delay_num`, `delay_den`))
 }
 
 

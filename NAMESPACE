@@ -2,4 +2,5 @@
 
 S3method("$<-",savvy_yaapng__sealed)
 S3method("[[<-",savvy_yaapng__sealed)
+export(apng)
 useDynLib(yaapng, .registration = TRUE)

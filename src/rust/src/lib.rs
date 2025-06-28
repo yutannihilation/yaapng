@@ -8,18 +8,18 @@ use savvy::savvy;
 use savvy::StringSexp;
 
 #[savvy]
-fn apng(
+fn apng_inner(
     png_files: StringSexp,
     apng_file: &str,
-    delay_num: f64,
-    delay_den: f64,
+    delay_num: i32,
+    delay_den: i32,
 ) -> savvy::Result<()> {
     // Create in-memory buffer for APNG
     let mut png_buffer = Vec::new();
 
     // Convert delay from seconds to milliseconds
-    let delay_num_ms = (delay_num * 1000.0) as u16;
-    let delay_den_ms = (delay_den * 1000.0) as u16;
+    let delay_num_ms = (delay_num * 1000) as u16;
+    let delay_den_ms = (delay_den * 1000) as u16;
 
     // Collect all frames
     let mut frames = Vec::new();
