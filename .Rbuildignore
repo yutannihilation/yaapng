@@ -7,6 +7,7 @@
 ^src/Makevars\.win$
 ^\.github$
 ^README\.Rmd$
+^output.png$
 
 ^anim$
 ^.quarto$
