@@ -9,6 +9,15 @@
 
 **Y**et **A**nather R Package for **APNG**.
 
+There's already [the apng package](https://github.com/qstokkink/apng), pure-R implementation of APNG encoder. This package is an experiment to see what it would be if I use these Rust crate:
+
+- [png](https://crates.io/crates/png)
+- [oxipng](https://crates.io/crates/oxipng)
+
+## Result
+
+No significant difference...?
+
 ## Installation
 
 You can install the development version of yaapng from
@@ -20,6 +29,8 @@ pak::pak("yutannihilation/yaapng")
 ```
 
 ## Example
+
+Based on the README of [the apng package](https://github.com/qstokkink/apng).
 
 ``` r
 library(yaapng)

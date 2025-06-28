@@ -11,3 +11,4 @@
 
 ^anim$
 ^.quarto$
+^LICENSE\.md$
